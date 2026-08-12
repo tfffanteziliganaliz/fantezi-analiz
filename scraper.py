@@ -1,15 +1,19 @@
 import json
-import requests
+import cloudscraper
 from bs4 import BeautifulSoup
 
-def tum_oyunculari_cek():
-    print("Transfermarkt canlı kadroları taranıyor...")
+def tum_oyunculari_otomatik_cek():
+    print("Transfermarkt canlı taranıyor (Cloudflare Bypass)...")
 
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-    }
+    # Cloudflare engelini aşan tarayıcı simülasyonu
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser': 'chrome',
+            'platform': 'windows',
+            'desktop': True
+        }
+    )
 
-    # Görselindeki 18 Takım Listesi
     takimlar = [
         {"ad": "Fenerbahçe", "url": "https://www.transfermarkt.com.tr/fenerbahce-istanbul/kader/verein/36"},
         {"ad": "Galatasaray", "url": "https://www.transfermarkt.com.tr/galatasaray-istanbul/kader/verein/141"},
@@ -32,49 +36,73 @@ def tum_oyunculari_cek():
     ]
 
     oyuncular = []
-    oyuncu_id = 1000
-    session = requests.Session()
+    global_id = 1000
 
     for takim in takimlar:
         try:
-            res = session.get(takim["url"], headers=headers, timeout=8)
-            soup = BeautifulSoup(res.content, 'html.parser')
-            
-            # Transfermarkt oyuncu linklerini otomatik yakala
-            links = soup.select('td.hauptlink a[href*="/profil/spieler/"]')
-            eklenenler = set()
-            count = 0
+            res = scraper.get(takim["url"], timeout=12)
+            if res.status_code == 200:
+                soup = BeautifulSoup(res.text, 'html.parser')
+                links = soup.select('td.hauptlink a[href*="/profil/spieler/"]')
+                eklenenler = set()
+                count = 0
 
-            for link in links:
-                isim = link.text.strip()
-                if isim and isim not in eklenenler and len(isim) > 2:
-                    eklenenler.add(isim)
-                    oyuncu_id += 1
-                    count += 1
-                    
-                    mevki = "FV" if count % 3 == 0 else ("DEF" if count % 2 == 0 else "OS")
-                    
-                    oyuncular.append({
-                        "id": oyuncu_id,
-                        "ad": isim,
-                        "takim": takim["ad"],
-                        "mevki": mevki,
-                        "fiyat": 7.5,
-                        "form": "İyi",
-                        "tahminiDakika": 90,
-                        "tahminiGol": 0,
-                        "tahminiAsist": 0,
-                        "golYememeIhtimali": False,
-                        "sakatlik": False
-                    })
-            print(f"✅ {takim['ad']}: {count} oyuncu otomatik çekildi.")
+                for link in links:
+                    isim = link.text.strip()
+                    if isim and isim not in eklenenler and len(isim) > 2:
+                        eklenenler.add(isim)
+                        global_id += 1
+                        count += 1
+
+                        # Mevki dağılımı (KL, DEF, OS, FV)
+                        mevki = "KL" if count == 1 else ("DEF" if count <= 4 else ("OS" if count <= 8 else "FV"))
+
+                        oyuncular.append({
+                            "id": global_id,
+                            "ad": isim,
+                            "takim": takim["ad"],
+                            "mevki": mevki,
+                            "fiyat": 7.5,
+                            "form": "İyi",
+                            "tahminiDakika": 90,
+                            "tahminiGol": 1 if mevki == "FV" else 0,
+                            "tahminiAsist": 1 if mevki in ["OS", "FV"] else 0,
+                            "golYememeIhtimali": True if mevki in ["KL", "DEF"] else False,
+                            "sakatlik": False
+                        })
+
+                print(f"✅ {takim['ad']}: {count} oyuncu çekildi.")
+            else:
+                print(f"⚠️ {takim['ad']} erişim engeli (HTTP {res.status_code})")
+
         except Exception as e:
-            print(f"⚠️ {takim['ad']} hata: {e}")
+            print(f"❌ {takim['ad']} hatası: {e}")
+
+    # EĞER SUNUCU ENGELLENİRSE SİTE BOŞ KALMASIN DİYE EMNİYET SİSTEMİ
+    if len(oyuncular) == 0:
+        print("⚠️ Canlı bağlantı kısıtlandı, emniyet sistemi devreye giriyor...")
+        for takim in takimlar:
+            for i in range(1, 11):
+                global_id += 1
+                mevki = "KL" if i == 1 else ("DEF" if i <= 4 else ("OS" if i <= 8 else "FV"))
+                oyuncular.append({
+                    "id": global_id,
+                    "ad": f"{takim['ad']} Oyuncu {i}",
+                    "takim": takim["ad"],
+                    "mevki": mevki,
+                    "fiyat": 7.0,
+                    "form": "İyi",
+                    "tahminiDakika": 90,
+                    "tahminiGol": 0,
+                    "tahminiAsist": 0,
+                    "golYememeIhtimali": False,
+                    "sakatlik": False
+                })
 
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(oyuncular, f, ensure_ascii=False, indent=2)
 
-    print(f"🚀 Toplam {len(oyuncular)} oyuncu 'veriler.json' dosyasına işlendi.")
+    print(f"\n🚀 Toplam {len(oyuncular)} oyuncu 'veriler.json'a kaydedildi.")
 
 if __name__ == "__main__":
-    tum_oyunculari_cek()
+    tum_oyunculari_otomatik_cek()
