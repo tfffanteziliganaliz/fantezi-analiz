@@ -1,0 +1,54 @@
+[
+  {
+    "id": 1,
+    "ad": "Mauro Icardi",
+    "takim": "Galatasaray",
+    "mevki": "FV",
+    "fiyat": 10.5,
+    "form": "Çok İyi",
+    "tahminiDakika": 90,
+    "tahminiGol": 1,
+    "tahminiAsist": 0,
+    "golYememeIhtimali": false,
+    "sakatlik": false
+  },
+  {
+    "id": 2,
+    "ad": "Edin Dzeko",
+    "takim": "Fenerbahçe",
+    "mevki": "FV",
+    "fiyat": 10.0,
+    "form": "İyi",
+    "tahminiDakika": 75,
+    "tahminiGol": 1,
+    "tahminiAsist": 1,
+    "golYememeIhtimali": false,
+    "sakatlik": false
+  },
+  {
+    "id": 3,
+    "ad": "Ferdi Kadıoğlu",
+    "takim": "Fenerbahçe",
+    "mevki": "DF",
+    "fiyat": 7.0,
+    "form": "Mükemmel",
+    "tahminiDakika": 90,
+    "tahminiGol": 0,
+    "tahminiAsist": 1,
+    "golYememeIhtimali": true,
+    "sakatlik": false
+  },
+  {
+    "id": 4,
+    "ad": "Fernando Muslera",
+    "takim": "Galatasaray",
+    "mevki": "KL",
+    "fiyat": 6.5,
+    "form": "İyi",
+    "tahminiDakika": 90,
+    "tahminiGol": 0,
+    "tahminiAsist": 0,
+    "golYememeIhtimali": true,
+    "sakatlik": false
+  }
+]
