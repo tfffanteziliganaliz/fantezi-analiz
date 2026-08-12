@@ -1,14 +1,15 @@
 import json
-import urllib.request
+import requests
 from bs4 import BeautifulSoup
 
-def verileri_guncelle():
-    print("Süper Lig kadroları Transfermarkt üzerinden çekiliyor...")
+def tum_oyunculari_cek():
+    print("Transfermarkt canlı kadroları taranıyor...")
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
     }
 
+    # Görselindeki 18 Takım Listesi
     takimlar = [
         {"ad": "Fenerbahçe", "url": "https://www.transfermarkt.com.tr/fenerbahce-istanbul/kader/verein/36"},
         {"ad": "Galatasaray", "url": "https://www.transfermarkt.com.tr/galatasaray-istanbul/kader/verein/141"},
@@ -17,66 +18,63 @@ def verileri_guncelle():
         {"ad": "Başakşehir", "url": "https://www.transfermarkt.com.tr/istanbul-basaksehir-fk/kader/verein/2841"},
         {"ad": "Göztepe", "url": "https://www.transfermarkt.com.tr/goztepe/kader/verein/11252"},
         {"ad": "Samsunspor", "url": "https://www.transfermarkt.com.tr/samsunspor/kader/verein/152"},
+        {"ad": "Çorum FK", "url": "https://www.transfermarkt.com.tr/corum-fk/kader/verein/30680"},
+        {"ad": "Ç. Rizespor", "url": "https://www.transfermarkt.com.tr/caykur-rizespor/kader/verein/132"},
+        {"ad": "Alanyaspor", "url": "https://www.transfermarkt.com.tr/alanyaspor/kader/verein/11282"},
+        {"ad": "Kasımpaşa", "url": "https://www.transfermarkt.com.tr/kasimpasa/kader/verein/10484"},
+        {"ad": "Konyaspor", "url": "https://www.transfermarkt.com.tr/konyaspor/kader/verein/2293"},
+        {"ad": "Amed SK", "url": "https://www.transfermarkt.com.tr/amed-sk/kader/verein/28168"},
+        {"ad": "Gaziantep FK", "url": "https://www.transfermarkt.com.tr/gaziantep-fk/kader/verein/28164"},
+        {"ad": "Kocaelispor", "url": "https://www.transfermarkt.com.tr/kocaelispor/kader/verein/3207"},
+        {"ad": "Erzurumspor FK", "url": "https://www.transfermarkt.com.tr/erzurumspor-fk/kader/verein/42491"},
+        {"ad": "Gençlerbirliği", "url": "https://www.transfermarkt.com.tr/genclerbirligi-ankara/kader/verein/820"},
         {"ad": "Eyüpspor", "url": "https://www.transfermarkt.com.tr/eyupspor/kader/verein/3257"}
     ]
 
     oyuncular = []
-    oyuncu_id = 100
+    oyuncu_id = 1000
+    session = requests.Session()
 
     for takim in takimlar:
         try:
-            req = urllib.request.Request(takim["url"], headers=headers)
-            html = urllib.request.urlopen(req).read().decode('utf-8')
-            soup = BeautifulSoup(html, 'html.parser')
-
-            oyuncu_kutulari = soup.find_all("td", class_="hauptlink")
+            res = session.get(takim["url"], headers=headers, timeout=8)
+            soup = BeautifulSoup(res.content, 'html.parser')
+            
+            # Transfermarkt oyuncu linklerini otomatik yakala
+            links = soup.select('td.hauptlink a[href*="/profil/spieler/"]')
             eklenenler = set()
             count = 0
 
-            for kutu in oyuncu_kutulari:
-                a_tag = kutu.find("a")
-                if a_tag and a_tag.text:
-                    isim = a_tag.text.strip()
-                    if isim not in eklenenler and len(isim) > 2:
-                        eklenenler.add(isim)
-                        oyuncu_id += 1
-                        count += 1
-                        
-                        oyuncular.append({
-                            "id": oyuncu_id,
-                            "ad": isim,
-                            "takim": takim["ad"],
-                            "mevki": "OS",
-                            "fiyat": 8.0,
-                            "form": "İyi",
-                            "tahminiDakika": 90,
-                            "tahminiGol": 0,
-                            "tahminiAsist": 0,
-                            "golYememeIhtimali": False,
-                            "sakatlik": False
-                        })
-                        if count >= 8:
-                            break
+            for link in links:
+                isim = link.text.strip()
+                if isim and isim not in eklenenler and len(isim) > 2:
+                    eklenenler.add(isim)
+                    oyuncu_id += 1
+                    count += 1
+                    
+                    mevki = "FV" if count % 3 == 0 else ("DEF" if count % 2 == 0 else "OS")
+                    
+                    oyuncular.append({
+                        "id": oyuncu_id,
+                        "ad": isim,
+                        "takim": takim["ad"],
+                        "mevki": mevki,
+                        "fiyat": 7.5,
+                        "form": "İyi",
+                        "tahminiDakika": 90,
+                        "tahminiGol": 0,
+                        "tahminiAsist": 0,
+                        "golYememeIhtimali": False,
+                        "sakatlik": False
+                    })
+            print(f"✅ {takim['ad']}: {count} oyuncu otomatik çekildi.")
         except Exception as e:
-            print(f"{takim['ad']} hatası: {e}")
-
-    # EĞER TRANSFERMARKT BOTU ENGELLERSE SAYFA BOŞ KALMASIN DİYE YEDEK LİSTE:
-    if len(oyuncular) == 0:
-        print("Transfermarkt bağlantısı engellendi, yedek güncel liste yükleniyor...")
-        oyuncular = [
-            {"id": 1, "ad": "Youssef En-Nesyri", "takim": "Fenerbahçe", "mevki": "FV", "fiyat": 10.0, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 2, "ad": "Fred", "takim": "Fenerbahçe", "mevki": "OS", "fiyat": 8.0, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 3, "ad": "Victor Osimhen", "takim": "Galatasaray", "mevki": "FV", "fiyat": 11.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 4, "ad": "Barış Alper Yılmaz", "takim": "Galatasaray", "mevki": "OS", "fiyat": 9.0, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 5, "ad": "Ciro Immobile", "takim": "Beşiktaş", "mevki": "FV", "fiyat": 10.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 6, "ad": "Rafa Silva", "takim": "Beşiktaş", "mevki": "OS", "fiyat": 9.5, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-            {"id": 7, "ad": "Simon Banza", "takim": "Trabzonspor", "mevki": "FV", "fiyat": 8.5, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False}
-        ]
+            print(f"⚠️ {takim['ad']} hata: {e}")
 
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(oyuncular, f, ensure_ascii=False, indent=2)
 
-    print("Veriler başarıyla yazıldı.")
+    print(f"🚀 Toplam {len(oyuncular)} oyuncu 'veriler.json' dosyasına işlendi.")
 
 if __name__ == "__main__":
-    verileri_guncelle()
+    tum_oyunculari_cek()
