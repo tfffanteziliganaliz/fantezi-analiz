@@ -1,86 +1,88 @@
 import json
+import urllib.request
+from bs4 import BeautifulSoup
 
-def guncel_verileri_cek():
-    print("Süper Lig tüm takımlar güncel fantezi kadroları işleniyor...")
-    
-    # Süper Lig Takımları ve Oyuncu Listesi (TFF Fantezi Puan Projeksiyonu)
-    oyuncular = [
-        # --- GALATASARAY ---
-        {"id": 101, "ad": "Victor Osimhen", "takim": "Galatasaray", "mevki": "FV", "fiyat": 11.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 102, "ad": "Barış Alper Yılmaz", "takim": "Galatasaray", "mevki": "OS", "fiyat": 9.0, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 103, "ad": "Gabriel Sara", "takim": "Galatasaray", "mevki": "OS", "fiyat": 8.5, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 104, "ad": "Lucas Torreira", "takim": "Galatasaray", "mevki": "OS", "fiyat": 6.5, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
-        {"id": 105, "ad": "Davinson Sánchez", "takim": "Galatasaray", "mevki": "DF", "fiyat": 7.0, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
-        {"id": 106, "ad": "Fernando Muslera", "takim": "Galatasaray", "mevki": "KL", "fiyat": 6.5, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
+def transfermarkt_canli_cek():
+    print("Transfermarkt üzerinden canlı Süper Lig verileri çekiliyor...")
 
-        # --- FENERBAHÇE ---
-        {"id": 201, "ad": "Romelu Lukaku", "takim": "Fenerbahçe", "mevki": "FV", "fiyat": 11.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 202, "ad": "Youssef En-Nesyri", "takim": "Fenerbahçe", "mevki": "FV", "fiyat": 9.5, "form": "Yüksek", "tahminiDakika": 80, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 203, "ad": "Allan Saint-Maximin", "takim": "Fenerbahçe", "mevki": "OS", "fiyat": 9.0, "form": "Çok İyi", "tahminiDakika": 85, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 204, "ad": "Dušan Tadić", "takim": "Fenerbahçe", "mevki": "OS", "fiyat": 9.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 205, "ad": "Sebastian Szymański", "takim": "Fenerbahçe", "mevki": "OS", "fiyat": 8.0, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 206, "ad": "Dominik Livaković", "takim": "Fenerbahçe", "mevki": "KL", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
+    # Transfermarkt bot engellerini aşmak için tarayıcı kimliği
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
 
-        # --- BEŞİKTAŞ ---
-        {"id": 301, "ad": "Mason Greenwood", "takim": "Beşiktaş", "mevki": "OS", "fiyat": 10.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 302, "ad": "Ciro Immobile", "takim": "Beşiktaş", "mevki": "FV", "fiyat": 10.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 303, "ad": "Rafa Silva", "takim": "Beşiktaş", "mevki": "OS", "fiyat": 9.5, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 304, "ad": "Gedson Fernandes", "takim": "Beşiktaş", "mevki": "OS", "fiyat": 8.0, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 305, "ad": "Mert Günok", "takim": "Beşiktaş", "mevki": "KL", "fiyat": 5.5, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
-
-        # --- TRABZONSPOR ---
-        {"id": 401, "ad": "Simon Banza", "takim": "Trabzonspor", "mevki": "FV", "fiyat": 8.5, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 402, "ad": "Edin Višća", "takim": "Trabzonspor", "mevki": "OS", "fiyat": 7.5, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 403, "ad": "Uğurcan Çakır", "takim": "Trabzonspor", "mevki": "KL", "fiyat": 5.5, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": True, "sakatlik": False},
-
-        # --- BAŞAKŞEHİR ---
-        {"id": 501, "ad": "Krzysztof Piątek", "takim": "Başakşehir", "mevki": "FV", "fiyat": 8.0, "form": "Yüksek", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-        {"id": 502, "ad": "Deniz Türüç", "takim": "Başakşehir", "mevki": "OS", "fiyat": 6.5, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- SİVASSPOR ---
-        {"id": 601, "ad": "Rey Manaj", "takim": "Sivasspor", "mevki": "FV", "fiyat": 7.5, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- KASIMPAŞA ---
-        {"id": 701, "ad": "Nuno Da Costa", "takim": "Kasımpaşa", "mevki": "FV", "fiyat": 7.0, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- ALANYASPOR ---
-        {"id": 801, "ad": "Sérgio Córdova", "takim": "Alanyaspor", "mevki": "FV", "fiyat": 6.5, "form": "Orta", "tahminiDakika": 80, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- CHRİSTİAN ATSU / HATAYSPOR ---
-        {"id": 901, "ad": "Carlos Strandberg", "takim": "Hatayspor", "mevki": "FV", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- ÇAYKUR RİZESPOR ---
-        {"id": 1001, "ad": "Ali Sowe", "takim": "Çaykur Rizespor", "mevki": "FV", "fiyat": 6.5, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- ANTALYASPOR ---
-        {"id": 1101, "ad": "Sam Larsson", "takim": "Antalyaspor", "mevki": "OS", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 90, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- GAZİANTEP FK ---
-        {"id": 1201, "ad": "Alexandru Maxim", "takim": "Gaziantep FK", "mevki": "OS", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 0, "tahminiAsist": 1, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- KONYASPOR ---
-        {"id": 1301, "ad": "Alassane Ndao", "takim": "Konyaspor", "mevki": "OS", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 80, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- KAYSERİSPOR ---
-        {"id": 1401, "ad": "Aylton Boa Morte", "takim": "Kayserispor", "mevki": "OS", "fiyat": 6.0, "form": "Orta", "tahminiDakika": 80, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- SAMSUNSPOR ---
-        {"id": 1501, "ad": "Marius Mouandilmadji", "takim": "Samsunspor", "mevki": "FV", "fiyat": 6.5, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- GÖZTEPE ---
-        {"id": 1601, "ad": "Rômulo", "takim": "Göztepe", "mevki": "FV", "fiyat": 6.5, "form": "Çok İyi", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- BODRUM FK ---
-        {"id": 1701, "ad": "George Pușcaș", "takim": "Bodrum FK", "mevki": "FV", "fiyat": 6.0, "form": "İyi", "tahminiDakika": 85, "tahminiGol": 0, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False},
-
-        # --- EYÜPSPOR ---
-        {"id": 1801, "ad": "Mame Thiam", "takim": "Eyüpspor", "mevki": "FV", "fiyat": 7.0, "form": "Mükemmel", "tahminiDakika": 90, "tahminiGol": 1, "tahminiAsist": 0, "golYememeIhtimali": False, "sakatlik": False}
+    # Süper Lig takımlarının Transfermarkt linkleri
+    takim_url_listesi = [
+        {"ad": "Galatasaray", "url": "https://www.transfermarkt.com.tr/galatasaray-istanbul/kader/verein/141"},
+        {"ad": "Fenerbahçe", "url": "https://www.transfermarkt.com.tr/fenerbahce-istanbul/kader/verein/36"},
+        {"ad": "Beşiktaş", "url": "https://www.transfermarkt.com.tr/besiktas-istanbul/kader/verein/418"},
+        {"ad": "Trabzonspor", "url": "https://www.transfermarkt.com.tr/trabzonspor/kader/verein/449"},
+        {"ad": "Başakşehir", "url": "https://www.transfermarkt.com.tr/istanbul-basaksehir-fk/kader/verein/2841"},
+        {"ad": "Eyüpspor", "url": "https://www.transfermarkt.com.tr/eyupspor/kader/verein/3257"},
+        {"ad": "Sivasspor", "url": "https://www.transfermarkt.com.tr/sivasspor/kader/verein/2400"},
+        {"ad": "Kasımpaşa", "url": "https://www.transfermarkt.com.tr/kasimpasa/kader/verein/10484"},
+        {"ad": "Alanyaspor", "url": "https://www.transfermarkt.com.tr/alanyaspor/kader/verein/11282"},
+        {"ad": "Antalyaspor", "url": "https://www.transfermarkt.com.tr/antalyaspor/kader/verein/1982"},
+        {"ad": "Göztepe", "url": "https://www.transfermarkt.com.tr/goztepe/kader/verein/11252"},
+        {"ad": "Samsunspor", "url": "https://www.transfermarkt.com.tr/samsunspor/kader/verein/152"},
+        {"ad": "Rizespor", "url": "https://www.transfermarkt.com.tr/caykur-rizespor/kader/verein/132"},
+        {"ad": "Gaziantep FK", "url": "https://www.transfermarkt.com.tr/gaziantep-fk/kader/verein/28164"},
+        {"ad": "Konyaspor", "url": "https://www.transfermarkt.com.tr/konyaspor/kader/verein/2293"},
+        {"ad": "Kayserispor", "url": "https://www.transfermarkt.com.tr/kayserispor/kader/verein/3205"},
+        {"ad": "Hatayspor", "url": "https://www.transfermarkt.com.tr/hatayspor/kader/verein/7858"},
+        {"ad": "Bodrum FK", "url": "https://www.transfermarkt.com.tr/bodrum-fk/kader/verein/32688"}
     ]
 
+    oyuncular = []
+    oyuncu_id = 100
+
+    for takim in takim_url_listesi:
+        try:
+            req = urllib.request.Request(takim["url"], headers=headers)
+            html = urllib.request.urlopen(req).read().decode('utf-8')
+            soup = BeautifulSoup(html, 'html.parser')
+
+            # Transfermarkt kadro tablosundaki oyuncu isimleri
+            oyuncu_kutulari = soup.find_all("td", class_="hauptlink")
+            
+            eklenenler = set()
+            count = 0
+
+            for kutu in oyuncu_kutulari:
+                a_tag = kutu.find("a")
+                if a_tag and a_tag.text:
+                    isim = a_tag.text.strip()
+                    if isim not in eklenenler and len(isim) > 2:
+                        eklenenler.add(isim)
+                        oyuncu_id += 1
+                        count += 1
+                        
+                        oyuncular.append({
+                            "id": oyuncu_id,
+                            "ad": isim,
+                            "takim": takim["ad"],
+                            "mevki": "OS", # Varsayılan fantezi mevkisi
+                            "fiyat": 7.5,
+                            "form": "İyi",
+                            "tahminiDakika": 90,
+                            "tahminiGol": 0,
+                            "tahminiAsist": 0,
+                            "golYememeIhtimali": False,
+                            "sakatlik": False
+                        })
+                        
+                        if count >= 8: # Her takımdan en popüler 8 ana oyuncuyu al
+                            break
+
+            print(f"✅ {takim['ad']}: {count} canlı oyuncu verisi çekildi.")
+
+        except Exception as e:
+            print(f"⚠️ {takim['ad']} verisi çekilirken hata: {e}")
+
+    # JSON dosyasına yazma
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(oyuncular, f, ensure_ascii=False, indent=2)
-    
-    print(f"Süper Lig'deki {len(oyuncular)} oyuncu verisi kaydedildi!")
+
+    print(f"\n🚀 Toplam {len(oyuncular)} oyuncu Transfermarkt'tan canlı çekilip veriler.json dosyasına kaydedildi.")
 
 if __name__ == "__main__":
-    guncel_verileri_cek()
+    transfermarkt_canli_cek()
